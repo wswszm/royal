@@ -1,38 +1,58 @@
 package com.game.royal.config.mysql;
 
-import com.alibaba.druid.filter.Filter;
-import com.alibaba.druid.filter.stat.StatFilter;
 import com.alibaba.druid.pool.DruidDataSource;
 import com.alibaba.druid.support.http.StatViewServlet;
-import com.google.common.collect.Lists;
+import com.alibaba.druid.support.http.WebStatFilter;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.annotation.Bean;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
 @SpringBootConfiguration
 public class DruidConfig {
-    @ConfigurationProperties(prefix = "spring.druid")
+    @ConfigurationProperties(prefix = "spring.datasource")
     @Bean("druidDataSource")
-    public DruidDataSource dataSource(Filter propertyFilter) {
-        DruidDataSource dataSource = new DruidDataSource();
-        //  添加慢日志功能Lists.newArrayList添加guava工具集
-        dataSource.setProxyFilters(Lists.newArrayList(propertyFilter));
-        return dataSource;
+    public DruidDataSource dataSource() {
+        return new DruidDataSource();
     }
 
+    //配置Druid的监控
+    //1、配置一个管理后台的Servlet
     @Bean
-    public Filter propertyFilter() {
-        StatFilter filter = new StatFilter();
-        filter.setSlowSqlMillis(3000);
-        filter.setLogSlowSql(true);
-        filter.setMergeSql(true);
-        return filter;
+    public ServletRegistrationBean statViewServlet() {
+        ServletRegistrationBean bean = new ServletRegistrationBean(new StatViewServlet(), "/druid/*");
+
+        Map<String, String> initParams = new HashMap<>();
+
+        initParams.put("loginUsername", "admin");
+        initParams.put("loginPassword", "123456");
+        initParams.put("allow", "");//默认就是允许所有访问
+        //initParams.put("allow", "localhost")：表示只有本机可以访问
+        initParams.put("deny", "");
+        //设置初始化参数
+        bean.setInitParameters(initParams);
+        return bean;
     }
+    //2、配置一个web监控的filter
 
-
+    //配置 Druid 监控 之  web 监控的 filter
+    //WebStatFilter：用于配置Web和Druid数据源之间的管理关联监控统计
     @Bean
-    public ServletRegistrationBean servletRegistrationBean() {
-        return new ServletRegistrationBean(new StatViewServlet(), "/druid/*");
+    public FilterRegistrationBean webStatFilter() {
+        FilterRegistrationBean bean = new FilterRegistrationBean();
+        bean.setFilter(new WebStatFilter());
+        //exclusions：设置哪些请求进行过滤排除掉，从而不进行统计
+        Map<String, String> initParams = new HashMap<>();
+        initParams.put("exclusions", "*.js,*.css,/druid/*");
+        bean.setInitParameters(initParams);
+        //"/*" 表示过滤所有请求
+        bean.setUrlPatterns(Arrays.asList("/*"));
+        return bean;
     }
+
 }

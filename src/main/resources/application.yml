@@ -21,10 +21,4 @@ spring:
     testOnReturn: false
     poolPreparedStatements: true
 logging:
-  level:
-    com.game.royal: debug
-  file:
-    path: log/out.log
-  pattern:
-    file: "%d %-5level [%thread] %logger : %msg%n"
-    console: "%d %-5level %logger : %msg%n"
+  config: classpath:logbak-spring.xml

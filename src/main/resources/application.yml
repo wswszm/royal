@@ -21,4 +21,4 @@ spring:
     testOnReturn: false
     poolPreparedStatements: true
 logging:
-  config: classpath:logbak-spring.xml
+  config: classpath:logback-spring.xml
